@@ -1,6 +1,8 @@
 
 
-To start off with I just did a fresh install of (bullseye) with desktop.
+To start off with I just did a fresh install of (bullseye) with desktop. I build this for a Pi Zero-W but 
+'m writing this install as I test it on a 2b and it seems to work just fine, with the benefit of potentially 
+being able to route the date from one net to another too (have yet to figure that out but that's next ;)).
 
 Before you start connect the pi to whatever your home wifi is if that's available. It will revert to these
 settings automatically when the AP is disabled and they're easier to set up before. You can also put several 
@@ -36,9 +38,10 @@ network={
 }
 ```
 
-The priority affects which one it will connect to so I start with the sketchiest (my mobile phone), then second 
-sketchiest (rugged phone with hotspot) and then the van's internal 3g router. The mobile phone options would only
-be on in case of a problem with the internal router so if they exist it will try to connect to them in preference.
+The priority affects which one it will connect to so I start with the sketchiest (my mobile phone) at the highest
+priority, then second sketchiest (rugged phone with hotspot) and then the van's internal 3g router. The mobile 
+phone options would only be on in case of a problem with the internal router so if they exist it will try to 
+connect to them in preference.
 
 We'll be relying on these settings later so set them up in advance. If you only have one wifi in play just auth with 
 it and you should be good to go. You can check your /etc/wpa_supplicant/wpa_supplicant file to see what's stored
@@ -49,7 +52,7 @@ in there and tweak it if needed.
 
 
 
-install this bit if you want the OLED_stats:
+Install this bit if you want the OLED_stats:
 ===============================================
 
 
@@ -76,7 +79,7 @@ clone this repo into your home folder:
 
 ```
 cd ~
-git clone [this rpo url]
+git clone [this repo url]
 ```
 
 copy stats2.py and dostats.sh from the hotspot folder to the OLED_stats folder:
