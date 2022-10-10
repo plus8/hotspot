@@ -2,6 +2,50 @@
 
 just done a fresh install of (bullseye) with desktop
 
+Before you start connect the pi to whatever your home wifi is if that's available. It will revert to these
+settings automatically. You can also put several entries for wifis with varying priorities in your
+wpa_supplicant file. e.g:
+
+  ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+  update_config=1
+  country=GB
+
+  network={
+          ssid="MOTOG5S"
+          scan_ssid=1
+          psk="SOMEKEY"
+          key_mgmt=WPA-PSK
+          priority=100
+  }
+
+  network={
+          ssid="UNIWAF40"
+          scan_ssid=1
+          psk="SOMEKEY"
+          key_mgmt=WPA-PSK
+          priority=80
+  }
+
+  network={
+          ssid="VANFI"
+          scan_ssid=1
+          psk="SOMEKEY"
+          key_mgmt=WPA-PSK
+          priority=60
+  }
+
+The priority affects which one it will connect to so I start with the sketchiest (my mobile phone), then second 
+sketchiest (rugged phone with hotspot) and then the van's internal 3g router.
+
+We'll be relying on these settings later so set them up in advance. If you only have one wifi in play just auth with 
+it and you should be good to go. You can check your /etc/wpa_supplicant/wpa_supplicant file to see what's stored
+in there and tweak it if needed.
+
+
+--------------------------------
+
+
+
 install this bit if you want the OLED_stats:
 
 https://www.the-diy-life.com/add-an-oled-stats-display-to-raspberry-pi-os-bullseye/
@@ -102,15 +146,94 @@ then right at the bottom add on it's own line:
 
   denyinterfaces wlan0
 
-close and save with CTRL+X and yes.
+close and save with CTRL+X & y.
 
 
 
 
+Next up let's have a look at the actual AP side of things. Starting with installing HostAPD and DNSmasq.
 
- 
+(based on this indestructable: https://www.instructables.com/Using-a-Raspberry-PI-Zero-W-As-an-Access-Point-and/ )
+
+  sudo apt-get install dnsmasq hostapd
+
+then stop both services:
+
+  sudo systemctl stop dnsmasq
+  sudo systemctl stop hostapd
+
+These services clash with your normal networking and whilst we could start and stop them each time, that doesn't persist
+beyond a reboot, so we mask them instead. That way if you set the hotspot to be in hotspot mode then reboot it, it'll
+still be in hotspot mode when it wakes up. Same goes for wifi client mode.
+
+The enable/disable script masks and unmasks the services as needed though so as long as you don't reboot you can just 
+carry on as is with them stopped for now.
+
+currently there's no hostapd config so let's have a look at the one from the hotspot folder:
+
+  nano hostapd.conf
 
 
+It should look a bit like this:
+
+  # the interface used by the AP
+  interface=wlan0
+  # "g" simply means 2.4GHz band
+  hw_mode=g
+  # the channel to use
+  channel=10
+  # limit the frequencies used to those allowed in the country
+  ieee80211d=1
+  # the country code
+  country_code=FR
+  # 802.11n support
+  ieee80211n=1
+  # QoS support, also required for full speed on 802.11n/ac/ax
+  wmm_enabled=1
+
+  # the name of the AP
+  ssid=VANDIESEL
+  # 1=wpa, 2=wep, 3=both
+  auth_algs=1
+  # WPA2 only
+  wpa=2
+  wpa_key_mgmt=WPA-PSK
+  rsn_pairwise=CCMP
+  wpa_passphrase=YOURWIFIPASSWORD
+
+You can change the ssid to be whatever you want yours to be, same goes for the password.
+
+Once you're happy with the settings, save and close with CTRL+X & y.
+
+Copy the config to the hostapd folder with:
+
+  sudo cp hostapd.conf /etc/hostapd/
+
+Then you may wish to reboot or if you're feeling brave just fire it up and see if it works:
+
+  sudo ./enable.sh
+
+It should do a bunch of stuff which takes about 30 sec but it can take a few minutes for the 
+hotspot to come online.
+
+You should see it appear in your wifi list and should be able to connect with your laptop or
+another pi.
+
+Once connected you can ssh into the machine with:
+
+  ssh pi@192.168.1.1
+
+
+And that ought to be that.
+
+To disable the hotspot and revert to your previous settings, ssh into the machine and run the
+disable script:
+
+  cd ~/hotspot
+  sudo ./disable.sh
+
+
+It'll do some stuff and then should be back on whatever network it was previously configured for.
 
 
 
@@ -128,6 +251,10 @@ resuming tomorrow.. whilst also hopefully adding routing so it works on a pi2.
 TODO:
 =================================
 
+- add a note about adding hostnames to the /etc/hosts file using the AP ip address so that when you log in the dns
+  automatically resolves to whatever you call your machine. e.g. 
+  192.168.1.1    vanpi3
+
 - Change stats2.py to use the hostname instead of VANDIESEL2, or the SSID from hostAPD, so it doesn't need setting manually
 
 - maybe look and see if Network Manager is a better way of doing the networking stuff.
@@ -135,6 +262,12 @@ TODO:
 - BUILD AN INSTALL SCRIPT WHICH DOES ALL THE CONFIG COPYING
 
 
+
+NOTES:
+=================================
+
+- You could probably make it work with udhcpd too (like the RPIAdhocwifi uses) but here' we're using dnsmasq
+which works great.
 
 
 
