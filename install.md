@@ -7,33 +7,33 @@ settings automatically. You can also put several entries for wifis with varying 
 wpa_supplicant file. e.g:
 
 ```
-  ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-  update_config=1
-  country=GB
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=GB
 
-  network={
-          ssid="MOTOG5S"
-          scan_ssid=1
-          psk="SOMEKEY"
-          key_mgmt=WPA-PSK
-          priority=100
-  }
+network={
+        ssid="MOTOG5S"
+        scan_ssid=1
+        psk="SOMEKEY"
+        key_mgmt=WPA-PSK
+        priority=100
+}
 
-  network={
-          ssid="UNIWAF40"
-          scan_ssid=1
-          psk="SOMEKEY"
-          key_mgmt=WPA-PSK
-          priority=80
-  }
+network={
+        ssid="UNIWAF40"
+        scan_ssid=1
+        psk="SOMEKEY"
+        key_mgmt=WPA-PSK
+        priority=80
+}
 
-  network={
-          ssid="VANFI"
-          scan_ssid=1
-          psk="SOMEKEY"
-          key_mgmt=WPA-PSK
-          priority=60
-  }
+network={
+        ssid="VANFI"
+        scan_ssid=1
+        psk="SOMEKEY"
+        key_mgmt=WPA-PSK
+        priority=60
+}
 ```
 
 The priority affects which one it will connect to so I start with the sketchiest (my mobile phone), then second 
@@ -58,7 +58,9 @@ perhaps modify paths once you've got it working.
 
 I guess you may want to enable the i2c bus using raspi-config too - idk if it's required but I did:
 
-  sudo raspi-config
+```
+sudo raspi-config
+```
 
 Then in the 'interface options' bit enable the i2c interface [NOT NEEDED, DONE BY BLINKA INSTALL]
 You probably want to enable the ssh interface too if you haven't already. Most of this setup can be done via an ssh window.
@@ -66,16 +68,21 @@ You probably want to enable the ssh interface too if you haven't already. Most o
 So once you've got the oled_stats example working, carry on..
 
 clone this repo into your home folder:
-  cd ~
-  git clone [this rpo url]
+
+```
+cd ~
+git clone [this rpo url]
+```
 
 copy stats2.py from the hotspot folder to the OLED_stats folder:
 
-  cd ~
-  cd hotspot
-  cp stats2.py ../OLED_Stats/
-  cd ../OLED_Stats/
-  python3 stats2.py
+```
+cd ~
+cd hotspot
+cp stats2.py ../OLED_Stats/
+cd ../OLED_Stats/
+python3 stats2.py
+```
 
 some stuff should come up on the OLED screen if it all worked. 
 
@@ -101,38 +108,41 @@ Disabling is just the same but reversed.
 So first thing to do is look at your current /etc/network interfaces file which, on a fresh pi install, should look 
 a bit like below:
 
-  # interfaces(5) file used by ifup(8) and ifdown(8)
-  # Include files from /etc/network/interfaces.d:
-  source /etc/network/interfaces.d/*
+```
+# interfaces(5) file used by ifup(8) and ifdown(8)
+# Include files from /etc/network/interfaces.d:
+source /etc/network/interfaces.d/*
+```
 
 and not much else. If that's the case then carry on, the below should work. If that's not the case you may have to 
 freestyle a bit.
 
-#If you *do* have other stuff in there which you need then you will need to copy those extra bits over into the 
-#hotspot/interfaces.org file. That way when the hotspot is disabled your interface file will be restored to how it is now.
-
 Create the "original" interfaces file based on your current config:
 
-  cd ~/hotspot
-  cp /etc/network/interfaces interfaces.org
-
+```
+cd ~/hotspot
+cp /etc/network/interfaces interfaces.org
+```
 
 If you look in the interfaces.ap file you should see the settings your AP will be using. I used 192.168.0 at home
 so to avoid clashes I'm using 192.168.1 range for this. It should look a bit like this:
 
-  allow-hotplug wlan0
-  iface wlan0 inet static
-  address 192.168.1.1
-  netmask 255.255.255.0
-  network 192.168.1.0
-
+```
+allow-hotplug wlan0
+iface wlan0 inet static
+address 192.168.1.1
+netmask 255.255.255.0
+network 192.168.1.0
+```
 
 
 Next up the the /etc/dhcpcd.conf file. Same deal: copy your dhcpcd.conf file into the hotspot folder and rename it 
 dhcpcd.conf.org
 
- cd ~/hotspot
- cp /etc/dhcpcd.conf dhcpcd.conf.org
+```
+cd ~/hotspot
+cp /etc/dhcpcd.conf dhcpcd.conf.org
+```
 
 They're your "backups"/original configs and won't be messed with by the script. They'll just be swapped out for other scripts
 while the hotspot is active.
@@ -140,14 +150,17 @@ while the hotspot is active.
 Now we need to make the dhcpcd.conf file which will be used by the AP, and all we need to do is copy the one you just created
 to a different name, and add the following text at the end, so:
 
-  cd ~/hotspot
-  cp dhcpcd.conf.org dhcpcd.conf.ap
-  nano dhcpcd.conf.ap
+```
+cd ~/hotspot
+cp dhcpcd.conf.org dhcpcd.conf.ap
+nano dhcpcd.conf.ap
+```
 
 then right at the bottom add on it's own line:
 
-  denyinterfaces wlan0
-
+```
+denyinterfaces wlan0
+```
 close and save with CTRL+X & y.
 
 
@@ -157,12 +170,16 @@ Next up let's have a look at the actual AP side of things. Starting with install
 
 (based on this indestructable: https://www.instructables.com/Using-a-Raspberry-PI-Zero-W-As-an-Access-Point-and/ )
 
-  sudo apt-get install dnsmasq hostapd
+```
+sudo apt-get install dnsmasq hostapd
+```
 
 then stop both services:
 
-  sudo systemctl stop dnsmasq
-  sudo systemctl stop hostapd
+```
+sudo systemctl stop dnsmasq
+sudo systemctl stop hostapd
+```
 
 These services clash with your normal networking and whilst we could start and stop them each time, that doesn't persist
 beyond a reboot, so we mask them instead. That way if you set the hotspot to be in hotspot mode then reboot it, it'll
@@ -173,35 +190,38 @@ carry on as is with them stopped for now.
 
 currently there's no hostapd config so let's have a look at the one from the hotspot folder:
 
-  nano hostapd.conf
-
+```
+nano hostapd.conf
+```
 
 It should look a bit like this:
 
-  # the interface used by the AP
-  interface=wlan0
-  # "g" simply means 2.4GHz band
-  hw_mode=g
-  # the channel to use
-  channel=10
-  # limit the frequencies used to those allowed in the country
-  ieee80211d=1
-  # the country code
-  country_code=FR
-  # 802.11n support
-  ieee80211n=1
-  # QoS support, also required for full speed on 802.11n/ac/ax
-  wmm_enabled=1
+```
+# the interface used by the AP
+interface=wlan0
+# "g" simply means 2.4GHz band
+hw_mode=g
+# the channel to use
+channel=10
+# limit the frequencies used to those allowed in the country
+ieee80211d=1
+# the country code
+country_code=FR
+# 802.11n support
+ieee80211n=1
+# QoS support, also required for full speed on 802.11n/ac/ax
+wmm_enabled=1
 
-  # the name of the AP
-  ssid=VANDIESEL
-  # 1=wpa, 2=wep, 3=both
-  auth_algs=1
-  # WPA2 only
-  wpa=2
-  wpa_key_mgmt=WPA-PSK
-  rsn_pairwise=CCMP
-  wpa_passphrase=YOURWIFIPASSWORD
+# the name of the AP
+ssid=VANDIESEL
+# 1=wpa, 2=wep, 3=both
+auth_algs=1
+# WPA2 only
+wpa=2
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+wpa_passphrase=YOURWIFIPASSWORD
+```
 
 You can change the ssid to be whatever you want yours to be, same goes for the password.
 
@@ -209,11 +229,15 @@ Once you're happy with the settings, save and close with CTRL+X & y.
 
 Copy the config to the hostapd folder with:
 
-  sudo cp hostapd.conf /etc/hostapd/
+```
+sudo cp hostapd.conf /etc/hostapd/
+```
 
 Then you may wish to reboot or if you're feeling brave just fire it up and see if it works:
 
-  sudo ./enable.sh
+```
+sudo ./enable.sh
+```
 
 It should do a bunch of stuff which takes about 30 sec but it can take a few minutes for the 
 hotspot to come online.
@@ -223,17 +247,19 @@ another pi.
 
 Once connected you can ssh into the machine with:
 
-  ssh pi@192.168.1.1
-
+```
+ssh pi@192.168.1.1
+```
 
 And that ought to be that.
 
 To disable the hotspot and revert to your previous settings, ssh into the machine and run the
 disable script:
 
-  cd ~/hotspot
-  sudo ./disable.sh
-
+```
+cd ~/hotspot
+sudo ./disable.sh
+```
 
 It'll do some stuff and then should be back on whatever network it was previously configured for.
 
