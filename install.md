@@ -80,6 +80,7 @@ copy stats2.py from the hotspot folder to the OLED_stats folder:
 cd ~
 cd hotspot
 cp stats2.py ../OLED_Stats/
+cp dostats.sh ../OLED_Stats/
 cd ../OLED_Stats/
 python3 stats2.py
 ```
@@ -269,9 +270,81 @@ NOT just 127.0.0.1. e.g:
 ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
 
-192.168.1.1     VANPI2
+#127.0.0.1	vanpi
 192.168.1.1     vanpi
+192.168.1.1     VANPI2
 192.168.1.1     hotspot
+```
+
+the top few lines are auto generated but the last 3 mean that if you join the AP's wifi network it's DNS
+will automatically resolve "hotspot", "vanpi" or whatever to the ip address of 192.168.1.1.
+So that means you can join the wifi and ping or ssh pi@hotspot and it will resolve magically. Or if you 
+set up the web-management console for this you would just join the wifi and enter http://hotspot into your 
+browser and it would bring up the control interface, no IP addresses. This is thanks to dnsmasq reading 
+directly from the hosts file, so you can add any arbitrary entries you like there e.g. wifi cam or 
+whatever (as long as they're on static IPs).
+
+You can edit your hosts file with:
+
+```
+sudo nano /etc/hosts
+```
+
+And add the relevant lines for the hostname/s you want to use. Save and exit with CTRL+X & y
+
+
+
+Notice there's a commented-out entry for the hostname (vanpi) under 127.0.0.1, if that's there on yours you need to comment 
+that out with a # and add an entry below for the same hostname on 192.168.1.1 if you want it to respond to that
+remotely. You can test this by joining the hotspot from a laptop and then try pinging the names:
+
+*You may need to reboot after hosts changes if you've already logged in remotely. 
+
+but then:
+
+```
+user@host:~$ ping vanpi
+PING vanpi (192.168.1.1) 56(84) bytes of data.
+64 bytes from vanpi (192.168.1.1): icmp_seq=1 ttl=64 time=0.601 ms
+64 bytes from vanpi (192.168.1.1): icmp_seq=2 ttl=64 time=11.1 ms
+64 bytes from vanpi (192.168.1.1): icmp_seq=3 ttl=64 time=2.22 ms
+^C
+--- vanpi ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 0.601/4.660/11.159/4.643 ms
+user@host:~$ ssh pi@vanpi
+The authenticity of host 'vanpi (192.168.1.1)' can't be established.
+ECDSA key fingerprint is SHA256:0um9ojblahblahblabhz2A9y+0LNR2i3bhamB64.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'vanpi' (ECDSA) to the list of known hosts.
+pi@vanpi's password: 
+Linux vanpi 5.15.61-v7+ #1579 SMP Fri Aug 26 11:10:59 BST 2022 armv7l
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Mon Oct 10 22:05:48 2022
+pi@vanpi:~ $ 
+
+```
+
+[hacker voice] "I'm in" :)
+
+If you did good it'll look like above. If you did bad you'll get a reply but it will
+be to 127.0.0.1 like below:
+
+```
+PING vanpi (127.0.1.1) 56(84) bytes of data.
+64 bytes from yourlaptop (127.0.1.1): icmp_seq=1 ttl=64 time=0.017 ms
+64 bytes from yourlaptop (127.0.1.1): icmp_seq=2 ttl=64 time=0.026 ms
+64 bytes from yourlaptop (127.0.1.1): icmp_seq=3 ttl=64 time=0.036 ms
+^C
+--- vanpi ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2030ms
+rtt min/avg/max/mdev = 0.017/0.026/0.036/0.008 ms$
 ```
 
 the top few lines are auto generated but the last 3 mean that if you join the AP's wifi network it's DNS
@@ -325,7 +398,72 @@ It'll do some stuff and then should be back on whatever network it was previousl
 Making the OLED stuff work:
 ----------------------------------
 
-edit stats2.py and add entry to cron
+Ok but we want the helpful OLED display too, right? so let's open up the stats2.py we copied into the
+OLED_stats folder earlier:
+
+```
+cd ~
+cd OLED_Stats/
+nano stats2.py
+```
+
+and somewhere near the bottom there should be an entry like this:
+
+```
+    except:
+      ssid = 'VANDIESEL'
+```
+
+Change that to be whatever you set your AP's SSID to. It's a manual fallback for the script when it
+can't figure out what SSID it's on. It can say whatever you likebut it makes sense to show the SSID
+from the hostAPD settings. This will hopefully be automated in future but I suck at python.
+
+Save and exit with CTRL+X & y
+
+then test it with:
+
+```
+python3 stats2.py
+```
+
+The screen should light up with the current wifi and ip address.
+
+do CTRL+C to exit the oled script. Notice how it needed ending? That's gonanbe relevant in a moment.
+
+
+Ok so let's make the dostats.sh script executable and test it:
+
+(still in the OLD_Stats folder)
+```
+chmod +x dostats.sh
+./dostats.sh
+```
+
+the screen should go blank momentarily and then and it should show the info.
+
+
+If that worked let's make sure the screen keeps updating automatically by adding an entry, to cron:
+
+```
+sudo nano /etc/crontab
+```
+
+then at the bottom before the last # add in this line:
+
+```
+*/5 *     * * *   pi    /home/pi/OLED_Stats/dostats.sh &
+```
+
+so that means every 5 mins, run the dostats.sh script we copied over earlier under the pi user.
+
+If you find te cron bit doesn't work - try copy and pasting the actual command part (i.e.
+ "/home/pi/OLED_Stats/dostats.sh" into the console from your home folder, if it breaks you should
+see why.
+
+Ok so let's make the dostats.sh script executable and test it:
+
+
+
 
 
 
@@ -358,6 +496,8 @@ resuming tomorrow.. whilst also hopefully adding routing so it works on a pi2.
 
 
 
+
+
 TODO:
 =================================
 
@@ -373,6 +513,8 @@ TODO:
 
 
 
+
+
 NOTES:
 =================================
 
@@ -381,8 +523,25 @@ which works great.
 
 
 
-Tips to speed up your PI, esp a Zero:
 
+
+Troubleshooting:
+=================================
+- if you can see the AP's SSID there but can't connect to it at all it's probably to do with hostAPD
+
+- if you can see the AP's SSID there and can connect to it but can't stay connected that's likely to do with
+  dnsmasq. Try connecting from a phone and if you get "ip conection failure" or it times out while "trying to
+obtain ip address" then it's to do with DHCP and assigning IP addresses should be in /etc/dnsmasq.conf
+
+- if you can connect to the wifi but can't connect to the hostname (e.g. pi@vanpi ) you should still be able
+  to connect using the ip address e.g. ssh pi@192.168.1.1
+
+
+
+
+
+Tips to speed up your PI, esp a Zero:
+=========================================
 Reduce number of desktops:
 - start menu/preferences/Main menu Editor
 - look in the "preferences" section and you should see a bunch of greyed out options with access to fun stuff.
@@ -402,5 +561,22 @@ arm_freq=2000
 My pi4 running at 2000mhz on a single desktop works surprisingly well as a daily machine and with an 8cm pc fan across the top of the open casing, and wired into the 5v supply, the Pi stays cool and the fan is barely audible from more than a few cm away.
 
 Ever since electricty prices shot up we've been looking for ways to reduce power usage and the pi uses a fair bit less power than the PC (~10w vs ~80-100).
+
+
+
+
+
+
+
+Other cron stuff for later
+============================================
+
+* *     * * *   root    /home/pi/hotspot/set_disk.sh
+
+* *     * * *   root    /home/pi/hotspot/set_hotspot.sh
+
+*/2 *     * * *   root    /home/pi/hotspot/set_shutdown.sh
+
+*/5 *     * * *   root    /home/pi/OLED_Stats/dostats.sh &
 
 
