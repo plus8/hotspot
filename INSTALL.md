@@ -1,5 +1,8 @@
 
 
+Some other info here: https://www.plus8.net/coding/raspberry-pi-home/personal-server-hotspot/
+
+
 To start off with I just did a fresh install of (bullseye) with desktop. I build this for a Pi Zero-W but 
 'm writing this install as I test it on a 2b and it seems to work just fine, with the benefit of potentially 
 being able to route the date from one net to another too (have yet to figure that out but that's next ;)).
