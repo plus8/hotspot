@@ -1,10 +1,10 @@
 
 
-just done a fresh install of (bullseye) with desktop
+To start off with I just did a fresh install of (bullseye) with desktop.
 
 Before you start connect the pi to whatever your home wifi is if that's available. It will revert to these
-settings automatically. You can also put several entries for wifis with varying priorities in your
-wpa_supplicant file. e.g:
+settings automatically when the AP is disabled and they're easier to set up before. You can also put several 
+entries for wifis with varying priorities in your wpa_supplicant file. e.g:
 
 ```
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
@@ -37,7 +37,8 @@ network={
 ```
 
 The priority affects which one it will connect to so I start with the sketchiest (my mobile phone), then second 
-sketchiest (rugged phone with hotspot) and then the van's internal 3g router.
+sketchiest (rugged phone with hotspot) and then the van's internal 3g router. The mobile phone options would only
+be on in case of a problem with the internal router so if they exist it will try to connect to them in preference.
 
 We'll be relying on these settings later so set them up in advance. If you only have one wifi in play just auth with 
 it and you should be good to go. You can check your /etc/wpa_supplicant/wpa_supplicant file to see what's stored
@@ -49,14 +50,18 @@ in there and tweak it if needed.
 
 
 install this bit if you want the OLED_stats:
+===============================================
 
+
+Follow this tutorial to get the OLED stuff working and then we'll tweak it to work how we want: 
 https://www.the-diy-life.com/add-an-oled-stats-display-to-raspberry-pi-os-bullseye/
 
-Clone/install the OLED_stats in your home folder ( i.e. ~/OLED_stats ) just like 
+Clone/install the above OLED_stats project into your home folder ( i.e. ~/OLED_stats ) just like 
 this hotspot folder ( i.e. ~/hotspot ). You can make it work in other folders too but
 perhaps modify paths once you've got it working.
 
-I guess you may want to enable the i2c bus using raspi-config too - idk if it's required but I did:
+I guess you may want to enable the i2c bus using raspi-config too - though it *should* be enabled 
+automatically later on:
 
 ```
 sudo raspi-config
@@ -74,7 +79,7 @@ cd ~
 git clone [this rpo url]
 ```
 
-copy stats2.py from the hotspot folder to the OLED_stats folder:
+copy stats2.py and dostats.sh from the hotspot folder to the OLED_stats folder:
 
 ```
 cd ~
@@ -82,13 +87,19 @@ cd hotspot
 cp stats2.py ../OLED_Stats/
 cp dostats.sh ../OLED_Stats/
 cd ../OLED_Stats/
+```
+
+and test it:
+
+```
 python3 stats2.py
 ```
 
-some stuff should come up on the OLED screen if it all worked. 
+some stuff should come up on the OLED screen if it all worked \o/.
 
-If you don't have a wifi configured there will probably be some missing data or it'll say it's connected to VANDISEL wifi,
+If you don't have a wifi configured there will probably be some missing data or it'll say it's connected to VANDIESEL wifi,
  don't worry about that for now.
+
 
 
 The Networking stuff:
