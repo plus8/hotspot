@@ -37,6 +37,81 @@ If you don't have a wifi configured there will probably be some missing data or 
  don't worry about that for now.
 
 
+The Networking stuff:
+-------------------------------------
+
+Even though most of the networking stuff is no longer done using /etc/network/interfaces, for the purposes of what we're 
+doing here with hostAPD it seems to work fine. There's probably a better way (e.g. Network Manager) but I've not figured that out yet, so this is how it is for now.
+
+The way this works is that it has an "org" copy of each config file (for when you're attached to a wifi/lan as a client) and
+an "ap" version which is configured for the device in access point mode. 
+
+There's a script to enable the hotspot (run with sudo ./enable.sh) and one to disable it (sudo ./disable.sh)
+
+When you enable, first it stops various services and the wifi interface, swaps the configs over, 
+then restarts the network and unmasks the dnsmasq and hostapd services. They do the actual clever stuff re the wifi.
+Disabling is just the same but reversed.
+
+So first thing to do is look at your current /etc/network interfaces file which, on a fresh pi install, should look 
+a bit like below:
+
+  # interfaces(5) file used by ifup(8) and ifdown(8)
+  # Include files from /etc/network/interfaces.d:
+  source /etc/network/interfaces.d/*
+
+and not much else. If that's the case then carry on, the below should work. If that's not the case you may have to 
+freestyle a bit.
+
+#If you *do* have other stuff in there which you need then you will need to copy those extra bits over into the 
+#hotspot/interfaces.org file. That way when the hotspot is disabled your interface file will be restored to how it is now.
+
+Create the "original" interfaces file based on your current config:
+
+  cd ~/hotspot
+  cp /etc/network/interfaces interfaces.org
+
+
+If you look in the interfaces.ap file you should see the settings your AP will be using. I used 192.168.0 at home
+so to avoid clashes I'm using 192.168.1 range for this. It should look a bit like this:
+
+  allow-hotplug wlan0
+  iface wlan0 inet static
+  address 192.168.1.1
+  netmask 255.255.255.0
+  network 192.168.1.0
+
+
+
+Next up the the /etc/dhcpcd.conf file. Same deal: copy your dhcpcd.conf file into the hotspot folder and rename it 
+dhcpcd.conf.org
+
+ cd ~/hotspot
+ cp /etc/dhcpcd.conf dhcpcd.conf.org
+
+They're your "backups"/original configs and won't be messed with by the script. They'll just be swapped out for other scripts
+while the hotspot is active.
+
+Now we need to make the dhcpcd.conf file which will be used by the AP, and all we need to do is copy the one you just created
+to a different name, and add the following text at the end, so:
+
+  cd ~/hotspot
+  cp dhcpcd.conf.org dhcpcd.conf.ap
+  nano dhcpcd.conf.ap
+
+then right at the bottom add on it's own line:
+
+  denyinterfaces wlan0
+
+close and save with CTRL+X and yes.
+
+
+
+
+
+ 
+
+
+
 
 
 
@@ -45,6 +120,19 @@ I'm writing this as i do the install on a clean machine.
 
 
 resuming tomorrow.. whilst also hopefully adding routing so it works on a pi2.
+
+
+
+
+
+TODO:
+=================================
+
+- Change stats2.py to use the hostname instead of VANDIESEL2, or the SSID from hostAPD, so it doesn't need setting manually
+
+- maybe look and see if Network Manager is a better way of doing the networking stuff.
+
+- BUILD AN INSTALL SCRIPT WHICH DOES ALL THE CONFIG COPYING
 
 
 
