@@ -6,6 +6,7 @@ Before you start connect the pi to whatever your home wifi is if that's availabl
 settings automatically. You can also put several entries for wifis with varying priorities in your
 wpa_supplicant file. e.g:
 
+```
   ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
   update_config=1
   country=GB
@@ -33,6 +34,7 @@ wpa_supplicant file. e.g:
           key_mgmt=WPA-PSK
           priority=60
   }
+```
 
 The priority affects which one it will connect to so I start with the sketchiest (my mobile phone), then second 
 sketchiest (rugged phone with hotspot) and then the van's internal 3g router.
