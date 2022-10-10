@@ -230,10 +230,68 @@ Once you're happy with the settings, save and close with CTRL+X & y.
 Copy the config to the hostapd folder with:
 
 ```
+cd ~/hotspot
 sudo cp hostapd.conf /etc/hostapd/
 ```
 
-Then you may wish to reboot or if you're feeling brave just fire it up and see if it works:
+Now to configure dnsmasq:
+
+```
+cd ~/hotspot
+sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.org
+sudo cp dnsmasq.conf /etc/
+```
+
+If you look in the dnsmasq file
+
+```
+nano dnsmasq.conf
+```
+
+you'll see something like the following:
+
+```
+interface=wlan0
+dhcp-range=192.168.1.2,192.168.1.50,255.255.255.0,24h
+```
+
+This handles the DHCP side of things and since we've defined the AP as 192.168.1.1, this
+assigns addresses from 192.168.1.2 upwards. There's lots of interesting settings in the dnsmasq.conf.org 
+file so have a look.
+
+Dnsmasq also reads from your /etc/hosts file by default, however if you want your AP to be directly 
+addressable like that you will need to add an entry to yours hosts file which uses the 192.168.1.1 ip address,
+NOT just 127.0.0.1. e.g:
+
+```
+127.0.0.1       localhost
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+
+192.168.1.1     VANPI2
+192.168.1.1     vanpi
+192.168.1.1     hotspot
+```
+
+the top few lines are auto generated but the last 3 mean that if you join the AP's wifi network it's DNS
+will automatically resolve "hotspot", "VANPI2" or whatever to the ip address of 192.168.1.1.
+So that means you can join the wifi and ssh pi@hotspot and it will resolve magically. Or if you set up 
+the web-management console for this you would just join the wifi and enter http://hotspot into your browser
+and it would bring up the control interface, no IP addresses. This is thanks to dnsmasq reading directly
+from the hosts file, so you can add any arbitrary entries you like there e.g. wifi cam or whatever
+(as long as they're on static IPs).
+
+You can edit your hosts file with:
+
+```
+sudo nano /etc/hosts
+```
+
+And add the relevant lines for the hostname/s you want to use. Save and exit with CTRL+X & y
+
+
+Then we *should* be all set. Let's see if it works:
 
 ```
 sudo ./enable.sh
@@ -263,6 +321,30 @@ sudo ./disable.sh
 
 It'll do some stuff and then should be back on whatever network it was previously configured for.
 
+
+Making the OLED stuff work:
+----------------------------------
+
+edit stats2.py and add entry to cron
+
+
+
+Making it more useful
+===================================
+
+Ok so whilst this is fun it's not super convenient unless you always have a linux/ssh-able laptop to hand.
+
+So what I did is installed a minimal webserver and made a really simple control page for it. You don't have
+to use it but it means I can control the hotspot, mount and unmount the attached SSD and also reboot the
+server from a very convenient phone interface.
+
+We just install the base apache and php and then set up a symbolic link to the www folder of ~/hotspot
+
+We enable write permission for a text file in the hotspot folder which can be set from on/off, and then
+we have a cron entry which runs a script which checks that textfile, and if it says "on" then it bringt he
+hotspot up (if not active) and if the textfile says "off" then it switches the hotspot off (if active).
+
+that might have to be for tomorrow though.. (today: 10/10/22)
 
 
 
