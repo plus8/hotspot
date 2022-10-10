@@ -6,6 +6,40 @@ install this bit if you want the OLED_stats:
 
 https://www.the-diy-life.com/add-an-oled-stats-display-to-raspberry-pi-os-bullseye/
 
+Clone/install the OLED_stats in your home folder ( i.e. ~/OLED_stats ) just like 
+this hotspot folder ( i.e. ~/hotspot ). You can make it work in other folders too but
+perhaps modify paths once you've got it working.
+
+I guess you may want to enable the i2c bus using raspi-config too - idk if it's required but I did:
+
+  sudo raspi-config
+
+Then in the 'interface options' bit enable the i2c interface [NOT NEEDED, DONE BY BLINKA INSTALL]
+You probably want to enable the ssh interface too if you haven't already. Most of this setup can be done via an ssh window.
+
+So once you've got the oled_stats example working, carry on..
+
+clone this repo into your home folder:
+  cd ~
+  git clone [this rpo url]
+
+copy stats2.py from the hotspot folder to the OLED_stats folder:
+
+  cd ~
+  cd hotspot
+  cp stats2.py ../OLED_Stats/
+  cd ../OLED_Stats/
+  python3 stats2.py
+
+some stuff should come up on the OLED screen if it all worked. 
+
+If you don't have a wifi configured there will probably be some missing data or it'll say it's connected to VANDISEL wifi,
+ don't worry about that for now.
+
+
+
+
+
 
 I'm writing this as i do the install on a clean machine. 
 
