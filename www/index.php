@@ -31,7 +31,7 @@ a:active {
 <body>
    
 <center>
-<div style="font-size: 50px; color: #33ff33;">Welcome to vanpi2</div>
+<div style="font-size: 50px; color: #33ff33;">Welcome to vanpi</div>
 <br>
 
 <?php
