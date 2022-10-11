@@ -62,6 +62,9 @@ Install this bit if you want the OLED_stats:
 Follow this tutorial to get the OLED stuff working and then we'll tweak it to work how we want: 
 https://www.the-diy-life.com/add-an-oled-stats-display-to-raspberry-pi-os-bullseye/
 
+The github code:
+https://github.com/mklements/OLED_Stats
+
 Clone/install the above OLED_stats project into your home folder ( i.e. ~/OLED_stats ) just like 
 this hotspot folder ( i.e. ~/hotspot ). You can make it work in other folders too but
 perhaps modify paths once you've got it working.
@@ -502,6 +505,13 @@ hotspot up (if not active) and if the textfile says "off" then it switches the h
 that might have to be for tomorrow though.. (today: 10/10/22)
 
 
+
+Setting up the SSD:
+==================================
+
+- set up samba
+- mount the SSD 
+- stuff with the www interface
 
 
 
