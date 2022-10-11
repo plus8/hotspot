@@ -504,6 +504,154 @@ that might have to be for tomorrow though.. (today: 10/10/22)
 
 
 
+
+IP forwarding
+===================================
+Whilst this wasn't part of the original design, As I'm writing this guide I'm doing so testing it on 
+a Pi 2b, which has a network port and tbh given it's there I may as well add the option to route
+traffic through the RJ45 to the 3g router.
+
+This part should set up IP forwarding for your AP. So that way you can connect your wireless devices to
+your PI-AP, and then route through to the internet via the RJ45 socket. In my case in the van I've got 
+a small 3g router (Teltonika RUT 104) which can take an RJ45 in, so I'd have the pi routing all traffic 
+to the router, or if the router failed, the pi AP would be reverted to client mode, where it would then 
+hopefully join as a client to either of my phone hotspots.
+
+I could arguably just connect devices directly to the 3g router, it can work as an AP just fine, but it 
+can also work as a wifi *client* (then routing all its traffic over whatever wifi), but then it can only 
+take an input from the RJ45, so something else (e.g. the Pi) would need to be handling the wirless stuff. 
+Besides the Pi will have one or more SSDs attached and offers many uses, not all of which require internet, 
+so i'd probably only have the internet active selectively.
+
+The router also has scope for external/bigger antennas for both wifi and 3g so means it should be a more
+flexible solution.
+
+The routing feature should soon be controllable form the web interface too, so would work as a switch to
+turn off internet (e.g. when on mobile/limited tarrifs).
+
+This is based on steps 16-24 of this guide:
+https://pimylifeup.com/raspberry-pi-wireless-access-point/
+
+*** btw I'm makign this bit up as I go along, this is not tried and tested like the previous bits
+and will likely change as I refine it. ***
+
+
+```
+sudo apt-get install iptables
+```
+
+then edit the following file: 
+
+```
+sudo nano /etc/sysctl.conf
+```
+
+find the line:
+```
+#net.ipv4.ip_forward=1
+```
+and uncomment it thus:
+
+```
+net.ipv4.ip_forward=1
+```
+CTRL+X & y to save and quit.
+
+
+To force a reload of this bit is go:
+```
+sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+```
+
+then do the following:
+```
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+```
+
+which means:
+consult the nat table,
+-A append POSTROUTING
+-o outgoing interface to send stuff eth0
+-j targetname
+
+Any connected wifi clients should now be able to browse the internet via the Pi's RJ45 connection.
+
+Let's store this config:
+```
+sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
+```
+
+Upon reboot settings are lost so we can restore them with this command:
+```
+sudo iptables-restore < /etc/iptables.ipv4.nat
+```
+
+To make this easier let's add a script file to switch on the routing for testing:
+```
+cd ~/hotspot
+nano ip_fwd_enable.sh
+```
+
+and paste in:
+```
+sudo iptables-restore < /etc/iptables.ipv4.nat
+```
+CTRL+X & y to save and exit
+
+make the script executable:
+```
+chmod +x ip_fwd_enable.sh
+```
+
+
+
+For some reason restoring the original (non-routing) config doesn't seem to get rid of the 
+POSTROUTING rule so to disable the routing we need to go about it a bit differently:
+
+List the POSTROUTING rules
+```
+sudo iptables -t nat -v -L POSTROUTING -n --line-number
+```
+
+There should be just one result - the rule we just added. Unless you're doing clever things
+with many IPtables rules (in which case you probably don't need this guide), then we're probably 
+only ever going to be adding and taking away that one rule, so we can probably put that in a 
+script file.
+
+Make a file to disable forwarding:
+```
+nano ip_fwd_disable.sh
+```
+
+and paste in:
+```
+iptables -t nat -D POSTROUTING 1
+```
+
+CTRL+X & y to save and quit, then make the script executable:
+```
+chmod +x ip_fwd_disable.sh
+```
+
+and then hopefully you should be able to switch routing on and off:
+```
+sudo ./ip_fwd_enable.sh
+```
+
+or 
+```
+sudo ./ip_fwd_disable.sh
+```
+
+
+
+
+
+------------------
+
+
+
+
 I'm writing this as i do the install on a clean machine. 
 
 
